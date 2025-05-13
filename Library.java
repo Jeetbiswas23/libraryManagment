@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Stack;
 
 public class Library {
@@ -35,48 +37,69 @@ public class Library {
         } else {
             System.out.println("\n--- List of Books ---");
             for (Book book : books) {
-                System.out.println(book);
+                System.out.println(book + " - " + (book.isAvailable() ? "Available" : "Borrowed"));
             }
         }
     }
+    
+    // Added for GUI
+    public List<Book> getBooks() {
+        return new ArrayList<>(books);
+    }
 
-    public void searchBook(String title) {
+    // Modified to return Book object
+    public Book searchBook(String title) {
         for (Book book : books) {
             if (book.getTitle().equalsIgnoreCase(title)) {
                 System.out.println("Book found: " + book);
-                return;
+                return book;
             }
         }
         System.out.println("Book not found.");
+        return null;
     }
 
-    public void borrowBook(String title, User user) {
+    // Modified to return success status
+    public boolean borrowBook(String title, User user) {
         for (Book book : books) {
-            if (book.getTitle().equalsIgnoreCase(title)) {
+            if (book.getTitle().equalsIgnoreCase(title) && book.isAvailable()) {
+                book.setAvailable(false);
                 user.borrowBook(book);
-                books.remove(book);
-                recentlyBorrowedBooks.push(book); // Add to recently borrowed stack
+                recentlyBorrowedBooks.push(book);
                 saveBooksToFile();
                 System.out.println("Book borrowed successfully: " + book.getTitle());
-                return;
+                return true;
+            } else if (book.getTitle().equalsIgnoreCase(title) && !book.isAvailable()) {
+                System.out.println("Book is already borrowed.");
+                return false;
             }
         }
         System.out.println("Book not available for borrowing.");
+        return false;
     }
 
-    public void returnBook(String title, User user) {
+    // Modified to return success status
+    public boolean returnBook(String title, User user) {
         Book returnedBook = user.returnBook(title);
         if (returnedBook != null) {
+            returnedBook.setAvailable(true);
             books.add(returnedBook);
             saveBooksToFile();
             System.out.println("Book returned successfully: " + returnedBook.getTitle());
+            return true;
         } else {
             System.out.println("You did not borrow this book.");
+            return false;
         }
     }
 
     public void viewBorrowedBooks(User user) {
         user.viewBorrowedBooks();
+    }
+    
+    // Added for GUI
+    public List<Book> getBorrowedBooks(User user) {
+        return user.getBorrowedBooksList();
     }
 
     public void viewRecentlyBorrowedBooks() {
@@ -93,7 +116,7 @@ public class Library {
     private void saveBooksToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(BOOKS_FILE_PATH))) {
             for (Book book : books) {
-                writer.write(book.getTitle() + "," + book.getAuthor());
+                writer.write(book.getTitle() + "," + book.getAuthor() + "," + book.isAvailable());
                 writer.newLine();
             }
         } catch (IOException e) {
@@ -111,8 +134,12 @@ public class Library {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length == 2) {
-                    books.add(new Book(parts[0], parts[1]));
+                if (parts.length >= 2) {
+                    Book book = new Book(parts[0], parts[1]);
+                    if (parts.length == 3) {
+                        book.setAvailable(Boolean.parseBoolean(parts[2]));
+                    }
+                    books.add(book);
                 }
             }
         } catch (IOException e) {

@@ -1,4 +1,6 @@
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
 
 public class User {
     private String username;
@@ -46,5 +48,10 @@ public class User {
                 System.out.println(book);
             }
         }
+    }
+    
+    // Added for GUI
+    public List<Book> getBorrowedBooksList() {
+        return new ArrayList<>(borrowedBooks);
     }
 }
