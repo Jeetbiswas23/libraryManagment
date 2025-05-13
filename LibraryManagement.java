@@ -1,6 +1,10 @@
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LibraryManagement {
+    private static List<BookRequest> bookRequests = new ArrayList<>();
+
     public static void main(String[] args) {
         Library library = new Library();
         UserManager userManager = new UserManager();
@@ -82,7 +86,8 @@ public class LibraryManagement {
                 System.out.println("1. View All Books");
                 System.out.println("2. Add Book");
                 System.out.println("3. Remove Book");
-                System.out.println("4. Exit Admin Panel");
+                System.out.println("4. View Book Requests");
+                System.out.println("5. Exit Admin Panel");
                 System.out.print("Enter your choice: ");
                 adminChoice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
@@ -104,14 +109,50 @@ public class LibraryManagement {
                         library.removeBook(removeTitle);
                         break;
                     case 4:
+                        handleBookRequests(scanner, library);
+                        break;
+                    case 5:
                         System.out.println("Exiting Admin Panel...");
                         break;
                     default:
                         System.out.println("Invalid choice. Please try again.");
                 }
-            } while (adminChoice != 4);
+            } while (adminChoice != 5);
         } else {
             System.out.println("Invalid admin credentials.");
+        }
+    }
+
+    private static void handleBookRequests(Scanner scanner, Library library) {
+        if (bookRequests.isEmpty()) {
+            System.out.println("No book requests available.");
+            return;
+        }
+        for (int i = 0; i < bookRequests.size(); i++) {
+            BookRequest request = bookRequests.get(i);
+            System.out.println((i + 1) + ". Title: " + request.getTitle() + ", Author: " + request.getAuthor());
+        }
+        System.out.print("Enter the request number to approve/reject (or 0 to exit): ");
+        int requestChoice = scanner.nextInt();
+        scanner.nextLine(); // Consume newline
+        if (requestChoice > 0 && requestChoice <= bookRequests.size()) {
+            BookRequest selectedRequest = bookRequests.get(requestChoice - 1);
+            System.out.println("1. Approve");
+            System.out.println("2. Reject");
+            System.out.print("Enter your choice: ");
+            int decision = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+            if (decision == 1) {
+                library.addBook(new Book(selectedRequest.getTitle(), selectedRequest.getAuthor()));
+                System.out.println("Book approved and added to the library.");
+            } else if (decision == 2) {
+                System.out.println("Book request rejected.");
+            } else {
+                System.out.println("Invalid choice.");
+            }
+            bookRequests.remove(requestChoice - 1);
+        } else if (requestChoice != 0) {
+            System.out.println("Invalid request number.");
         }
     }
 
@@ -134,7 +175,8 @@ public class LibraryManagement {
             System.out.println("3. Borrow Book");
             System.out.println("4. Return Book");
             System.out.println("5. View Borrowed Books");
-            System.out.println("6. Logout");
+            System.out.println("6. Request Book Addition");
+            System.out.println("7. Logout");
             System.out.print("Enter your choice: ");
             choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -162,11 +204,41 @@ public class LibraryManagement {
                     library.viewBorrowedBooks(currentUser);
                     break;
                 case 6:
+                    handleBookAdditionRequest(scanner);
+                    break;
+                case 7:
                     System.out.println("Logging out...");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (choice != 6);
+        } while (choice != 7);
+    }
+
+    private static void handleBookAdditionRequest(Scanner scanner) {
+        System.out.print("Enter book title: ");
+        String title = scanner.nextLine();
+        System.out.print("Enter author name: ");
+        String author = scanner.nextLine();
+        bookRequests.add(new BookRequest(title, author));
+        System.out.println("Book request submitted for admin approval.");
+    }
+}
+
+class BookRequest {
+    private String title;
+    private String author;
+
+    public BookRequest(String title, String author) {
+        this.title = title;
+        this.author = author;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getAuthor() {
+        return author;
     }
 }
